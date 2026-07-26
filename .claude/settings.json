@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs -I{} head -60 {})",
+      "Bash(grep -n \"use Illuminate\\\\\\\\\\\\\\\\Database\\\\\\\\\\\\\\\\Eloquent\\\\\\\\\\\\\\\\Attributes\" app/Models/User.php)",
+      "Bash(xargs -n1 basename)",
+      "Bash(php -r ' *)",
+      "Bash(xargs grep -ln \"assertStatus\\\\|assertForbidden\")",
+      "Bash(grep -rln \"Illuminate\\\\\\\\\\\\\\\\Support\\\\\\\\\\\\\\\\Carbon\\\\b\" app/Models/*.php)",
+      "Bash(xargs grep -n \"Illuminate\\\\\\\\\\\\\\\\Support\\\\\\\\\\\\\\\\Carbon\\\\b\")",
+      "Bash(grep -rn \"Illuminate\\\\\\\\\\\\\\\\Support\\\\\\\\\\\\\\\\Carbon\" app/Models/*.php)",
+      "Bash(composer lint *)",
+      "Bash(composer types:check)"
+    ]
+  }
+}

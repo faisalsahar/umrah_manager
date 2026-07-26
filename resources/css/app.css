@@ -1,0 +1,176 @@
+@import 'tailwindcss';
+@import '../../vendor/livewire/flux/dist/flux.css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
+@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-zinc-50: #fafafa;
+    --color-zinc-100: #f5f5f5;
+    --color-zinc-200: #e5e5e5;
+    --color-zinc-300: #d4d4d4;
+    --color-zinc-400: #a3a3a3;
+    --color-zinc-500: #737373;
+    --color-zinc-600: #525252;
+    --color-zinc-700: #404040;
+    --color-zinc-800: #262626;
+    --color-zinc-900: #171717;
+    --color-zinc-950: #0a0a0a;
+
+    /* Sky-blue accent — the same blue as the circulating digits in the Kaaba
+       tawaf logo and the table header underline — instead of Flux's default
+       stark black (light) / white (dark). Drives checkboxes, switches, radios,
+       links, headings, and the current sidebar item across the whole app; see
+       the [data-flux-button] override below for why buttons don't inherit it. */
+    --color-accent: var(--color-sky-600);
+    --color-accent-content: var(--color-sky-600);
+    --color-accent-foreground: var(--color-white);
+}
+
+@layer theme {
+    .dark {
+        --color-accent: var(--color-sky-500);
+        --color-accent-content: var(--color-sky-400);
+        --color-accent-foreground: var(--color-white);
+    }
+}
+
+/* Buttons opt out of the app-wide sky accent above: a light grey fill reads
+   calmer for a button used dozens of times per screen, with just the border
+   carrying a light sky tint — Flux's own button component is untouched, this
+   only redefines the CSS variables it already reads (--color-accent for the
+   primary variant's fill/text) scoped to elements it marks as buttons. */
+[data-flux-button] {
+    --color-accent: var(--color-zinc-100);
+    --color-accent-foreground: var(--color-zinc-800);
+}
+
+.dark [data-flux-button] {
+    --color-accent: var(--color-zinc-700);
+    --color-accent-foreground: var(--color-zinc-100);
+}
+
+[data-flux-button].border-black\/10 {
+    border-color: color-mix(in oklab, var(--color-sky-500) 45%, transparent);
+}
+
+.dark [data-flux-button].border-0 {
+    border-width: 1px;
+    border-color: color-mix(in oklab, var(--color-sky-400) 35%, transparent);
+}
+
+/* A small tactile press-down on every button — Flux's own component already
+   handles color/opacity transitions; this only adds the transform side,
+   scoped narrowly enough to never conflict with those. */
+[data-flux-button] {
+    transition: transform 150ms ease;
+}
+
+[data-flux-button]:active {
+    transform: scale(0.97);
+}
+
+/* The sidebar's current-item text also reads --color-accent-content (same
+   variable headings/links use for the sky tint) — kept neutral here so the
+   active nav item looks like a normal highlighted row, not blue text. */
+[data-flux-sidebar-item] {
+    --color-accent-content: var(--color-zinc-800);
+}
+
+.dark [data-flux-sidebar-item] {
+    --color-accent-content: var(--color-zinc-100);
+}
+
+/* Hovering a nav item tints only its icon — a different color per item, like
+   a colorful icon dock — never the label. Each `flux:sidebar.item` in
+   sidebar.blade.php carries one of these `nav-icon-*` classes matching its
+   icon. The label is untouched: Flux's own hover style for it stays exactly
+   as-is (a plain neutral darkening), since we never change `color` on the
+   item element itself here — only on the icon, in its own layer.
+   `@layer utilities` + the extra `[data-flux-sidebar-item]` qualifier keep
+   this at least as specific as (and in the same cascade layer as) Flux's own
+   `!important` rule that would otherwise force the icon back to
+   `currentColor` on hover. */
+@layer utilities {
+    [data-flux-sidebar-item].nav-icon-sky:hover [data-flux-icon] { color: var(--color-sky-500) !important; }
+    [data-flux-sidebar-item].nav-icon-violet:hover [data-flux-icon] { color: var(--color-violet-500) !important; }
+    [data-flux-sidebar-item].nav-icon-orange:hover [data-flux-icon] { color: var(--color-orange-500) !important; }
+    [data-flux-sidebar-item].nav-icon-indigo:hover [data-flux-icon] { color: var(--color-indigo-500) !important; }
+    [data-flux-sidebar-item].nav-icon-teal:hover [data-flux-icon] { color: var(--color-teal-500) !important; }
+    [data-flux-sidebar-item].nav-icon-amber:hover [data-flux-icon] { color: var(--color-amber-500) !important; }
+    [data-flux-sidebar-item].nav-icon-rose:hover [data-flux-icon] { color: var(--color-rose-500) !important; }
+    [data-flux-sidebar-item].nav-icon-pink:hover [data-flux-icon] { color: var(--color-pink-500) !important; }
+    [data-flux-sidebar-item].nav-icon-emerald:hover [data-flux-icon] { color: var(--color-emerald-500) !important; }
+    [data-flux-sidebar-item].nav-icon-cyan:hover [data-flux-icon] { color: var(--color-cyan-500) !important; }
+    [data-flux-sidebar-item].nav-icon-fuchsia:hover [data-flux-icon] { color: var(--color-fuchsia-500) !important; }
+    [data-flux-sidebar-item].nav-icon-lime:hover [data-flux-icon] { color: var(--color-lime-500) !important; }
+}
+
+@layer base {
+
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+[data-flux-field]:not(ui-radio, ui-checkbox) {
+    @apply grid gap-2;
+}
+
+[data-flux-label] {
+    @apply  !mb-0 !leading-tight;
+}
+
+input:focus[data-flux-control],
+textarea:focus[data-flux-control],
+select:focus[data-flux-control] {
+    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+}
+
+/* A slim, unobtrusive scrollbar everywhere — most noticeable on the
+   horizontally-scrolling tables and the hotel availability grid — instead
+   of the browser's default chunky one. Purely cosmetic, same colors as the
+   rest of the theme. */
+html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-zinc-300) transparent;
+}
+
+.dark {
+    scrollbar-color: var(--color-zinc-700) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--color-zinc-300);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background-color: var(--color-zinc-700);
+}
+
+/* \[:where(&)\]:size-4 {
+    @apply size-4;
+} */

@@ -1,0 +1,2 @@
+take login idea from the ai_reasearch app. 
+including login screen and mechanism . 

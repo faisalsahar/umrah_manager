@@ -1,0 +1,23 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+
+parameters:
+    paths:
+        - app/
+        - bootstrap/app.php
+        - config/
+        - database/
+        - routes/
+
+    level: 7
+
+    # This trait is only ever `use`d inside Livewire single-file components —
+    # anonymous classes defined in resources/views/pages/**/*.blade.php, compiled
+    # by Blaze at runtime. PHPStan only scans first-class PHP files under app/, so
+    # it can never see the six real call sites and reports the trait as unused.
+    # Verified used: services, vehicles, movement-types, permit-types, and
+    # geography pages all `use App\Livewire\Concerns\GuardsDestructiveDeletes;`.
+    ignoreErrors:
+        - identifier: trait.unused
+          path: app/Livewire/Concerns/GuardsDestructiveDeletes.php

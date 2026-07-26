@@ -1,0 +1,9 @@
+Email	Password	Role
+info@computerize.biz	D25ddeaf16@	Platform admin — full /admin/umrah-companies access
+ops.admin@alrahma.test	password	Al-Rahma Umrah Services — org Admin
+ops.supervisor@alrahma.test	password	Al-Rahma — Supervisor
+ops.entry@alrahma.test	password	Al-Rahma — Data Entry
+ops.accountant@alrahma.test	password	Al-Rahma — Accountant
+agent@sudan-travel.test	password	Sudan Travel Agency — Agent user
+owner@test-umrah.test	password	Test Umrah — Owner
+agent@test-umrah.test	password	Test Agent — Agent user
