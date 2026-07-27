@@ -14,6 +14,16 @@ new #[Title('Dashboard')] class extends Component {
         return Auth::user()->currentOrganization;
     }
 
+    /**
+     * The current user's own onboarding code — generated on first login (see
+     * AppServiceProvider::issueOnboardingCodeOnLogin()), guaranteed non-blank
+     * by the time they can reach this page.
+     */
+    public function getOnboardingCodeProperty(): string
+    {
+        return Auth::user()->ensureOnboardingCode();
+    }
+
     public function getOrdersProperty()
     {
         if (! $this->organization) {
@@ -54,13 +64,43 @@ new #[Title('Dashboard')] class extends Component {
 
 <div class="flex flex-col gap-6">
     @if (! $this->organization)
-        <x-ui.card class="text-center">
-            <x-ui.empty-state icon="building-office-2" :title="__('You don\'t belong to an organization yet')">
-                <x-slot name="action">
-                    <flux:button :href="route('organizations.index')" variant="primary" wire:navigate>{{ __('Go to Organizations') }}</flux:button>
-                </x-slot>
-            </x-ui.empty-state>
-            <flux:subheading class="mx-auto -mt-6 max-w-sm">{{ __('Create one, or ask an existing organization to add you by your onboarding code.') }}</flux:subheading>
+        <x-ui.card class="mx-auto max-w-lg text-center">
+            <x-ui.empty-state icon="building-office-2" :title="__('You don\'t belong to an organization yet')" />
+
+            <flux:subheading class="mx-auto -mt-3 max-w-sm">
+                {{ __('Share the code below with an Umrah company, agent, or supplier you work with — they can add you to their team with it, no email address needed.') }}
+            </flux:subheading>
+
+            <div
+                class="mx-auto mt-5 flex max-w-xs items-center justify-center gap-2"
+                x-data="{
+                    copied: false,
+                    async copy() {
+                        try {
+                            await navigator.clipboard.writeText('{{ $this->onboardingCode }}');
+                            this.copied = true;
+                            setTimeout(() => this.copied = false, 1500);
+                        } catch (e) {
+                            console.warn('Could not copy to clipboard');
+                        }
+                    },
+                }"
+            >
+                <div class="flex-1 rounded-[5px] border border-zinc-200/80 bg-zinc-50 px-4 py-3 font-mono text-2xl font-semibold tracking-[0.3em] text-zinc-800 dark:border-white/10 dark:bg-white/5 dark:text-white">
+                    {{ $this->onboardingCode }}
+                </div>
+                <flux:button @click="copy()" icon="document-duplicate">
+                    <span x-show="!copied">{{ __('Copy') }}</span>
+                    <span x-show="copied" x-cloak>{{ __('Copied') }}</span>
+                </flux:button>
+            </div>
+
+            <flux:subheading class="mx-auto mt-5 max-w-sm">
+                {{ __('Prefer to run your own company, agency, or supplier instead? You can start one yourself.') }}
+            </flux:subheading>
+            <flux:button :href="route('organizations.index')" variant="primary" class="mt-3" wire:navigate>
+                {{ __('Go to Organizations') }}
+            </flux:button>
         </x-ui.card>
     @else
         <x-ui.page-header :title="__('Dashboard')">

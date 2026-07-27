@@ -47,20 +47,22 @@
                         <flux:sidebar.item icon="home" class="nav-icon-sky" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                             {{ __('Dashboard') }}
                         </flux:sidebar.item>
-                        <flux:sidebar.item icon="clipboard-document-list" class="nav-icon-violet" :href="route('operating-orders.index')" :current="request()->routeIs('operating-orders.*')" wire:navigate>
-                            {{ __('Operating Orders') }}
-                        </flux:sidebar.item>
-                        <flux:sidebar.item icon="paper-airplane" class="nav-icon-orange" :href="route('movements.index')" :current="request()->routeIs('movements.*')" wire:navigate>
-                            {{ __('Daily Movements') }}
-                        </flux:sidebar.item>
-                        @if ($currentOrgType === \App\Enums\OrganizationType::Agent)
-                            <flux:sidebar.item icon="magnifying-glass" class="nav-icon-teal" :href="route('my-pilgrims.index')" :current="request()->routeIs('my-pilgrims.*')" wire:navigate>
-                                {{ __('My Pilgrims') }}
+                        @if ($currentOrgType !== null)
+                            <flux:sidebar.item icon="clipboard-document-list" class="nav-icon-violet" :href="route('operating-orders.index')" :current="request()->routeIs('operating-orders.*')" wire:navigate>
+                                {{ __('Operating Orders') }}
                             </flux:sidebar.item>
-                        @else
-                            <flux:sidebar.item icon="users" class="nav-icon-indigo" :href="route('groups.index')" :current="request()->routeIs('groups.*')" wire:navigate>
-                                {{ __('Groups & Pilgrims') }}
+                            <flux:sidebar.item icon="paper-airplane" class="nav-icon-orange" :href="route('movements.index')" :current="request()->routeIs('movements.*')" wire:navigate>
+                                {{ __('Daily Movements') }}
                             </flux:sidebar.item>
+                            @if ($currentOrgType === \App\Enums\OrganizationType::Agent)
+                                <flux:sidebar.item icon="magnifying-glass" class="nav-icon-teal" :href="route('my-pilgrims.index')" :current="request()->routeIs('my-pilgrims.*')" wire:navigate>
+                                    {{ __('My Pilgrims') }}
+                                </flux:sidebar.item>
+                            @else
+                                <flux:sidebar.item icon="users" class="nav-icon-indigo" :href="route('groups.index')" :current="request()->routeIs('groups.*')" wire:navigate>
+                                    {{ __('Groups & Pilgrims') }}
+                                </flux:sidebar.item>
+                            @endif
                         @endif
                     </flux:sidebar.group>
 

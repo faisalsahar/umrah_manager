@@ -39,6 +39,45 @@ class DashboardTest extends TestCase
             ->assertSee(__('You don\'t belong to an organization yet'));
     }
 
+    public function test_a_user_with_no_organization_sees_their_own_onboarding_code(): void
+    {
+        $user = User::factory()->create(['onboarding_code' => null]);
+        $this->actingAs($user);
+
+        $code = $user->ensureOnboardingCode();
+
+        Livewire::test('pages::dashboard')->assertSee($code);
+    }
+
+    public function test_a_user_with_no_organization_does_not_see_org_scoped_nav_items(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $response = $this->get(route('dashboard'));
+
+        $response->assertSee(__('Dashboard'));
+        $response->assertSee(__('Organizations'));
+        $response->assertDontSee(__('Operating Orders'));
+        $response->assertDontSee(__('Daily Movements'));
+        $response->assertDontSee(__('Groups & Pilgrims'));
+    }
+
+    public function test_a_user_with_an_organization_sees_org_scoped_nav_items(): void
+    {
+        $operator = Organization::factory()->operator()->create();
+        $user = User::factory()->create();
+        $operator->addMember($user, OrganizationRole::Admin);
+        $user->forceFill(['current_organization_id' => $operator->id])->save();
+        $this->actingAs($user);
+
+        $response = $this->get(route('dashboard'));
+
+        $response->assertSee(__('Operating Orders'));
+        $response->assertSee(__('Daily Movements'));
+        $response->assertSee(__('Groups & Pilgrims'));
+    }
+
     public function test_the_dashboard_only_shows_orders_visible_to_the_current_organization(): void
     {
         $operator = Organization::factory()->operator()->create();
