@@ -10,6 +10,8 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Title('Organizations')] class extends Component {
+    public string $newMemberCode = '';
+
     public string $newNameAr = '';
 
     public string $newNameEn = '';
@@ -34,13 +36,13 @@ new #[Title('Organizations')] class extends Component {
     }
 
     /**
-     * Every organization type a user may start themselves. Umrah companies
+     * Every organization type a manager may bring someone in as. Umrah companies
      * (Operator) are excluded — only the platform admin creates those, see
      * pages::admin.umrah-companies.index.
      *
      * @return list<OrganizationType>
      */
-    public function getSelfServiceTypesProperty(): array
+    public function getCreatableTypesProperty(): array
     {
         return array_values(array_filter(
             OrganizationType::cases(),
@@ -96,13 +98,20 @@ new #[Title('Organizations')] class extends Component {
     }
 
     /**
-     * Create a new organization and make the current user its owner. Any signed-in
-     * user may start a new organization (e.g. an agency signing up); managing an
-     * *existing* organization's membership is gated separately, see canManage.
+     * Create a new organization for someone else, by their onboarding code, and
+     * make *them* its owner — the only way a non-Umrah-company organization comes
+     * into existence. There is no self-service path: a user can't spin up their own
+     * Agent/Hotel/Transport Supplier organization just by asking for one — an
+     * existing organization's manager has to vouch for them by pulling in their
+     * code and choosing what they become. Umrah companies themselves are still
+     * only ever created by the platform admin (see pages::admin.umrah-companies).
      */
-    public function createOrganization(): void
+    public function bringInOrganization(): void
     {
+        abort_unless($this->canManage, 403);
+
         $validated = $this->validate([
+            'newMemberCode' => ['required', 'string'],
             'newNameAr' => ['required', 'string', 'max:255'],
             'newNameEn' => ['required', 'string', 'max:255'],
             // Umrah companies (Operator) are excluded here — only the admin panel
@@ -118,6 +127,14 @@ new #[Title('Organizations')] class extends Component {
             ],
         ]);
 
+        $owner = User::where('onboarding_code', strtoupper($validated['newMemberCode']))->first();
+
+        if (! $owner) {
+            $this->addError('newMemberCode', __('No user was found with that onboarding code.'));
+
+            return;
+        }
+
         $organization = Organization::create([
             'type' => $validated['newType'],
             'name_ar' => $validated['newNameAr'],
@@ -128,12 +145,10 @@ new #[Title('Organizations')] class extends Component {
                 : null,
         ]);
 
-        $organization->addMember(Auth::user(), OrganizationRole::Owner);
-        Auth::user()->forceFill(['current_organization_id' => $organization->id])->save();
+        $organization->addMember($owner, OrganizationRole::Owner);
 
-        $this->reset(['newNameAr', 'newNameEn', 'newType', 'newCountry', 'newParentOrganizationId']);
-        \Flux\Flux::toast(text: __('Organization created.'), variant: 'success');
-        $this->redirect(route('organizations.index'), navigate: true);
+        $this->reset(['newMemberCode', 'newNameAr', 'newNameEn', 'newType', 'newCountry', 'newParentOrganizationId']);
+        \Flux\Flux::toast(text: __(':name created and handed to :owner.', ['name' => $organization->name, 'owner' => $owner->name]), variant: 'success');
     }
 
     /**
@@ -225,29 +240,34 @@ new #[Title('Organizations')] class extends Component {
         </x-ui.card>
     @endif
 
-    <x-ui.card>
-        <flux:heading size="lg">{{ __('Start a new organization') }}</flux:heading>
-        <flux:subheading class="mb-4">{{ __('You become its owner immediately. Umrah companies are created by the platform admin — share your onboarding code with them to get started.') }}</flux:subheading>
+    @if ($this->canManage)
+        <x-ui.card>
+            <flux:heading size="lg">{{ __('Bring in an organization') }}</flux:heading>
+            <flux:subheading class="mb-4">
+                {{ __('Someone you work with — an agent, hotel, or transport supplier — gives you their onboarding code. Creating it here makes them its owner, not you. There is no other way to start one; only the platform admin creates Umrah companies.') }}
+            </flux:subheading>
 
-        <form wire:submit="createOrganization" class="flex flex-wrap items-end gap-4">
-            <flux:input wire:model="newNameAr" :label="__('Name (Arabic)')" class="max-w-56" />
-            <flux:input wire:model="newNameEn" :label="__('Name (English)')" class="max-w-56" />
-            <flux:select wire:model.live="newType" :label="__('Type')" class="max-w-48">
-                <flux:select.option value="">{{ __('Choose a type') }}</flux:select.option>
-                @foreach ($this->selfServiceTypes as $type)
-                    <flux:select.option value="{{ $type->value }}">{{ $type->label() }}</flux:select.option>
-                @endforeach
-            </flux:select>
-            <flux:input wire:model="newCountry" :label="__('Country code')" placeholder="SA" class="max-w-32" />
-            @if ($newType === \App\Enums\OrganizationType::Agent->value)
-                <flux:select wire:model="newParentOrganizationId" :label="__('Sub-agent of')" class="max-w-56">
-                    <flux:select.option value="">{{ __('— Not a sub-agent —') }}</flux:select.option>
-                    @foreach ($this->parentAgents as $parentAgent)
-                        <flux:select.option value="{{ $parentAgent->id }}">{{ $parentAgent->name }}</flux:select.option>
+            <form wire:submit="bringInOrganization" class="flex flex-wrap items-end gap-4">
+                <flux:input wire:model="newMemberCode" :label="__('Their onboarding code')" placeholder="K7P2QX9M" class="max-w-48" />
+                <flux:input wire:model="newNameAr" :label="__('Name (Arabic)')" class="max-w-56" />
+                <flux:input wire:model="newNameEn" :label="__('Name (English)')" class="max-w-56" />
+                <flux:select wire:model.live="newType" :label="__('Type')" class="max-w-48">
+                    <flux:select.option value="">{{ __('Choose a type') }}</flux:select.option>
+                    @foreach ($this->creatableTypes as $type)
+                        <flux:select.option value="{{ $type->value }}">{{ $type->label() }}</flux:select.option>
                     @endforeach
                 </flux:select>
-            @endif
-            <flux:button type="submit" variant="primary">{{ __('Create') }}</flux:button>
-        </form>
-    </x-ui.card>
+                <flux:input wire:model="newCountry" :label="__('Country code')" placeholder="SA" class="max-w-32" />
+                @if ($newType === \App\Enums\OrganizationType::Agent->value)
+                    <flux:select wire:model="newParentOrganizationId" :label="__('Sub-agent of')" class="max-w-56">
+                        <flux:select.option value="">{{ __('— Not a sub-agent —') }}</flux:select.option>
+                        @foreach ($this->parentAgents as $parentAgent)
+                            <flux:select.option value="{{ $parentAgent->id }}">{{ $parentAgent->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                @endif
+                <flux:button type="submit" variant="primary">{{ __('Create') }}</flux:button>
+            </form>
+        </x-ui.card>
+    @endif
 </div>

@@ -96,11 +96,8 @@ new #[Title('Dashboard')] class extends Component {
             </div>
 
             <flux:subheading class="mx-auto mt-5 max-w-sm">
-                {{ __('Prefer to run your own company, agency, or supplier instead? You can start one yourself.') }}
+                {{ __('No organization can be started here directly — the platform admin creates Umrah companies, and every other organization (agent, hotel, transport supplier) is created by an existing one pulling in your code.') }}
             </flux:subheading>
-            <flux:button :href="route('organizations.index')" variant="primary" class="mt-3" wire:navigate>
-                {{ __('Go to Organizations') }}
-            </flux:button>
         </x-ui.card>
     @else
         <x-ui.page-header :title="__('Dashboard')">

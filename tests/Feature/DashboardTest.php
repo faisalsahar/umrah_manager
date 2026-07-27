@@ -57,10 +57,10 @@ class DashboardTest extends TestCase
         $response = $this->get(route('dashboard'));
 
         $response->assertSee(__('Dashboard'));
-        $response->assertSee(__('Organizations'));
         $response->assertDontSee(__('Operating Orders'));
         $response->assertDontSee(__('Daily Movements'));
         $response->assertDontSee(__('Groups & Pilgrims'));
+        $response->assertDontSee(__('Organizations'));
     }
 
     public function test_a_user_with_an_organization_sees_org_scoped_nav_items(): void
@@ -76,6 +76,7 @@ class DashboardTest extends TestCase
         $response->assertSee(__('Operating Orders'));
         $response->assertSee(__('Daily Movements'));
         $response->assertSee(__('Groups & Pilgrims'));
+        $response->assertSee(__('Organizations'));
     }
 
     public function test_the_dashboard_only_shows_orders_visible_to_the_current_organization(): void

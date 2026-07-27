@@ -275,6 +275,36 @@ labels introduced, verified by the same programmatic extraction used originally.
 
 ---
 
+## Onboarding-code-only org creation, admin add-to-existing-company, and the `env:sync` command
+
+- **Self-service organization creation is gone entirely — this supersedes the "self-service
+  still works for Agent/Hotel/TransportSupplier" line above.** There is no longer any path
+  where a signed-in user can spontaneously create their own Agent/Hotel/TransportSupplier
+  organization. The only way a non-Umrah-company organization comes into existence now: an
+  existing organization's manager (Owner/Admin) enters *someone else's* onboarding code on
+  `pages::organizations.index` (`bringInOrganization()`), picks the type, and that person —
+  not the manager — becomes its owner. Sub-agent nesting (`parent_organization_id`) still
+  works exactly as before, just gated the same way. Umrah companies (`Operator`) are still
+  only ever created by the platform admin.
+- **The platform admin can now add a user to an *existing* company**, not just create new
+  ones — `pages::admin.umrah-companies.show` gained an `addMemberByCode()` method mirroring
+  the one on the organizations page, scoped to `OrganizationRole::availableFor(Operator)`.
+  Removing or re-assigning an existing member's role is still the company's own job.
+- **A user with no organization** now sees a minimal sidebar (Dashboard only — Operating
+  Orders, Daily Movements, Groups & Pilgrims, and now Organizations too are hidden until they
+  belong to something) and the dashboard's empty state shows their own onboarding code
+  (copy-to-clipboard) with instructions, replacing a vaguer "create one or ask to be added"
+  message that never actually showed the code.
+- **`php artisan env:sync`** (`App\Console\Commands\SyncEnvExample`): copies any `KEY=value`
+  line present in `.env.example` but absent from `.env`, appended under a dated comment
+  header — existing values in `.env` are never touched, and a commented-out key in `.env`
+  is treated as absent (so it gets a fresh active line from the example). If `.env` doesn't
+  exist at all, it's created from `.env.example` wholesale. `--dry-run` previews without
+  writing; `--example=` / `--target=` override the default paths for testing or unusual
+  layouts. See `README.md` for the day-to-day usage.
+
+---
+
 ## 1. What this product actually is
 
 Azowar is **SaaS sold to Umrah operators** (licensed Umrah companies in KSA). Each

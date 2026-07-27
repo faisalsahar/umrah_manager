@@ -3,6 +3,7 @@
 use App\Enums\OrganizationRole;
 use App\Enums\OrganizationType;
 use App\Models\Organization;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
@@ -15,6 +16,10 @@ new #[Title('Umrah Company')] class extends Component {
     public string $subscriptionExpiresAt = '';
 
     public bool $isActive = true;
+
+    public string $memberCode = '';
+
+    public string $memberRole = '';
 
     public function mount(Organization $umrahCompany): void
     {
@@ -30,6 +35,41 @@ new #[Title('Umrah Company')] class extends Component {
     public function getCompanyProperty()
     {
         return Organization::findOrFail($this->companyId);
+    }
+
+    /**
+     * @return list<OrganizationRole>
+     */
+    public function getMemberRolesProperty(): array
+    {
+        return OrganizationRole::availableFor(OrganizationType::Operator);
+    }
+
+    /**
+     * The admin's other lever besides creating a brand-new company: drop an
+     * already-registered user straight into an existing one by their onboarding
+     * code. Everything else about membership (removing, re-assigning a role)
+     * stays the company's own job — see the read-only roster below.
+     */
+    public function addMemberByCode(): void
+    {
+        $validated = $this->validate([
+            'memberCode' => ['required', 'string'],
+            'memberRole' => ['required', \Illuminate\Validation\Rule::in(array_map(fn (OrganizationRole $role): string => $role->value, OrganizationRole::availableFor(OrganizationType::Operator)))],
+        ]);
+
+        $newMember = User::where('onboarding_code', strtoupper($validated['memberCode']))->first();
+
+        if (! $newMember) {
+            $this->addError('memberCode', __('No user was found with that onboarding code.'));
+
+            return;
+        }
+
+        $this->company->addMember($newMember, OrganizationRole::from($validated['memberRole']));
+
+        $this->reset(['memberCode', 'memberRole']);
+        \Flux\Flux::toast(text: __(':name added to :organization.', ['name' => $newMember->name, 'organization' => $this->company->name]), variant: 'success');
     }
 
     /**
@@ -109,8 +149,20 @@ new #[Title('Umrah Company')] class extends Component {
                 @endforelse
             </flux:table.rows>
         </flux:table>
-        <flux:text class="p-6 pt-3 text-xs text-zinc-500">
-            {{ __('Adding, removing, or re-assigning a member\'s role is done by the company itself, not from here.') }}
+
+        <form wire:submit="addMemberByCode" class="flex flex-wrap items-end gap-4 p-6 pt-4">
+            <flux:input wire:model="memberCode" :label="__('Onboarding code')" placeholder="K7P2QX9M" class="max-w-48" />
+            <flux:select wire:model="memberRole" :label="__('Role')" class="max-w-48">
+                <flux:select.option value="">{{ __('Choose a role') }}</flux:select.option>
+                @foreach ($this->memberRoles as $role)
+                    <flux:select.option value="{{ $role->value }}">{{ $role->label() }}</flux:select.option>
+                @endforeach
+            </flux:select>
+            <flux:button type="submit" variant="primary">{{ __('Add') }}</flux:button>
+        </form>
+
+        <flux:text class="px-6 pb-6 text-xs text-zinc-500">
+            {{ __('Removing or re-assigning an existing member\'s role is still done by the company itself, not from here.') }}
         </flux:text>
     </x-ui.card>
 </div>

@@ -121,6 +121,33 @@ class UmrahCompanyManagementTest extends TestCase
         $this->assertTrue($company->subscription_expires_at->isFuture());
     }
 
+    public function test_the_admin_can_add_an_existing_user_to_a_company_by_onboarding_code(): void
+    {
+        $company = Organization::factory()->operator()->create();
+        $newMember = User::factory()->create();
+        $this->actingAs($this->admin());
+
+        Livewire::test('pages::admin.umrah-companies.show', ['umrahCompany' => $company])
+            ->set('memberCode', $newMember->onboarding_code)
+            ->set('memberRole', OrganizationRole::DataEntry->value)
+            ->call('addMemberByCode')
+            ->assertHasNoErrors();
+
+        $this->assertSame(OrganizationRole::DataEntry, $newMember->fresh()->roleIn($company));
+    }
+
+    public function test_adding_a_member_with_an_unknown_code_fails_gracefully(): void
+    {
+        $company = Organization::factory()->operator()->create();
+        $this->actingAs($this->admin());
+
+        Livewire::test('pages::admin.umrah-companies.show', ['umrahCompany' => $company])
+            ->set('memberCode', 'NOTREAL1')
+            ->set('memberRole', OrganizationRole::DataEntry->value)
+            ->call('addMemberByCode')
+            ->assertHasErrors('memberCode');
+    }
+
     public function test_a_non_admin_cannot_view_a_companys_roster(): void
     {
         $company = Organization::factory()->operator()->create();

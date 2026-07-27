@@ -16,35 +16,84 @@ class OrganizationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_a_user_can_start_a_new_organization_and_becomes_its_owner(): void
+    public function test_a_manager_can_bring_in_a_new_organization_and_the_code_holder_becomes_its_owner(): void
     {
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $manager = User::factory()->create();
+        $operator = Organization::factory()->operator()->create();
+        $operator->addMember($manager, OrganizationRole::Owner);
+        $manager->forceFill(['current_organization_id' => $operator->id])->save();
+        $this->actingAs($manager);
+
+        $newOwner = User::factory()->create();
 
         Livewire::test('pages::organizations.index')
+            ->set('newMemberCode', $newOwner->onboarding_code)
             ->set('newNameAr', 'وكالة السودان للسفر')
             ->set('newNameEn', 'Sudan Travel Agency')
             ->set('newType', OrganizationType::Agent->value)
             ->set('newCountry', 'SA')
-            ->call('createOrganization')
+            ->call('bringInOrganization')
             ->assertHasNoErrors();
 
         $organization = Organization::where('name_en', 'Sudan Travel Agency')->firstOrFail();
 
-        $this->assertSame(OrganizationRole::Owner, $user->fresh()->roleIn($organization));
-        $this->assertSame($organization->id, $user->fresh()->current_organization_id);
+        $this->assertSame(OrganizationRole::Owner, $newOwner->fresh()->roleIn($organization));
+        // The manager who brought them in never becomes a member themselves.
+        $this->assertNull($manager->fresh()->roleIn($organization));
     }
 
-    public function test_a_user_cannot_self_service_create_an_umrah_company(): void
+    public function test_a_user_who_manages_no_organization_cannot_bring_in_a_new_one(): void
     {
         $user = User::factory()->create();
         $this->actingAs($user);
+        $newOwner = User::factory()->create();
 
         Livewire::test('pages::organizations.index')
+            ->set('newMemberCode', $newOwner->onboarding_code)
+            ->set('newNameAr', 'وكالة السودان للسفر')
+            ->set('newNameEn', 'Sudan Travel Agency')
+            ->set('newType', OrganizationType::Agent->value)
+            ->call('bringInOrganization')
+            ->assertStatus(403);
+
+        $this->assertSame(0, Organization::where('name_en', 'Sudan Travel Agency')->count());
+    }
+
+    public function test_bringing_in_an_organization_with_an_unknown_code_fails_gracefully(): void
+    {
+        $manager = User::factory()->create();
+        $operator = Organization::factory()->operator()->create();
+        $operator->addMember($manager, OrganizationRole::Owner);
+        $manager->forceFill(['current_organization_id' => $operator->id])->save();
+        $this->actingAs($manager);
+
+        Livewire::test('pages::organizations.index')
+            ->set('newMemberCode', 'NOSUCHCODE')
+            ->set('newNameAr', 'وكالة السودان للسفر')
+            ->set('newNameEn', 'Sudan Travel Agency')
+            ->set('newType', OrganizationType::Agent->value)
+            ->call('bringInOrganization')
+            ->assertHasErrors('newMemberCode');
+
+        $this->assertSame(0, Organization::where('name_en', 'Sudan Travel Agency')->count());
+    }
+
+    public function test_a_manager_cannot_bring_in_an_umrah_company(): void
+    {
+        $manager = User::factory()->create();
+        $operator = Organization::factory()->operator()->create();
+        $operator->addMember($manager, OrganizationRole::Owner);
+        $manager->forceFill(['current_organization_id' => $operator->id])->save();
+        $this->actingAs($manager);
+
+        $newOwner = User::factory()->create();
+
+        Livewire::test('pages::organizations.index')
+            ->set('newMemberCode', $newOwner->onboarding_code)
             ->set('newNameAr', 'شركة الرحمة لخدمات العمرة')
             ->set('newNameEn', 'Al-Rahma Umrah Services')
             ->set('newType', OrganizationType::Operator->value)
-            ->call('createOrganization')
+            ->call('bringInOrganization')
             ->assertHasErrors('newType');
 
         $this->assertSame(0, Organization::where('name_en', 'Al-Rahma Umrah Services')->count());
@@ -161,37 +210,50 @@ class OrganizationTest extends TestCase
         $this->assertSame(60000, $operator->balanceWith($agent));
     }
 
-    public function test_a_user_can_start_a_sub_agent_under_an_existing_agent(): void
+    public function test_a_manager_can_bring_in_a_sub_agent_under_an_existing_agent(): void
     {
         $parentAgent = Organization::factory()->agent()->create();
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $manager = User::factory()->create();
+        $operator = Organization::factory()->operator()->create();
+        $operator->addMember($manager, OrganizationRole::Owner);
+        $manager->forceFill(['current_organization_id' => $operator->id])->save();
+        $this->actingAs($manager);
+
+        $newOwner = User::factory()->create();
 
         Livewire::test('pages::organizations.index')
+            ->set('newMemberCode', $newOwner->onboarding_code)
             ->set('newNameAr', 'وكيل الخرطوم الفرعي')
             ->set('newNameEn', 'Khartoum Sub-Agent')
             ->set('newType', OrganizationType::Agent->value)
             ->set('newParentOrganizationId', (string) $parentAgent->id)
-            ->call('createOrganization')
+            ->call('bringInOrganization')
             ->assertHasNoErrors();
 
         $subAgent = Organization::where('name_en', 'Khartoum Sub-Agent')->firstOrFail();
         $this->assertTrue($subAgent->isSubAgentOf($parentAgent));
         $this->assertTrue($parentAgent->subAgents->contains($subAgent));
+        $this->assertSame(OrganizationRole::Owner, $newOwner->fresh()->roleIn($subAgent));
     }
 
     public function test_a_new_hotel_organization_cannot_be_nested_under_an_agent(): void
     {
         $parentAgent = Organization::factory()->agent()->create();
-        $user = User::factory()->create();
-        $this->actingAs($user);
+        $manager = User::factory()->create();
+        $operator = Organization::factory()->operator()->create();
+        $operator->addMember($manager, OrganizationRole::Owner);
+        $manager->forceFill(['current_organization_id' => $operator->id])->save();
+        $this->actingAs($manager);
+
+        $newOwner = User::factory()->create();
 
         Livewire::test('pages::organizations.index')
+            ->set('newMemberCode', $newOwner->onboarding_code)
             ->set('newNameAr', 'اختبار')
             ->set('newNameEn', 'Test Hotel Co')
             ->set('newType', OrganizationType::Hotel->value)
             ->set('newParentOrganizationId', (string) $parentAgent->id)
-            ->call('createOrganization')
+            ->call('bringInOrganization')
             ->assertHasNoErrors();
 
         $hotelOrg = Organization::where('name_en', 'Test Hotel Co')->firstOrFail();

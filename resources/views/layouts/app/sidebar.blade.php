@@ -92,11 +92,13 @@
                     </flux:sidebar.group>
                     @endif
 
-                    <flux:sidebar.group :heading="__('Account')" class="grid">
-                        <flux:sidebar.item icon="briefcase" class="nav-icon-lime" :href="route('organizations.index')" :current="request()->routeIs('organizations.*')" wire:navigate>
-                            {{ __('Organizations') }}
-                        </flux:sidebar.item>
-                    </flux:sidebar.group>
+                    @if ($currentOrgType !== null)
+                        <flux:sidebar.group :heading="__('Account')" class="grid">
+                            <flux:sidebar.item icon="briefcase" class="nav-icon-lime" :href="route('organizations.index')" :current="request()->routeIs('organizations.*')" wire:navigate>
+                                {{ __('Organizations') }}
+                            </flux:sidebar.item>
+                        </flux:sidebar.group>
+                    @endif
                 @endif
             </flux:sidebar.nav>
 
