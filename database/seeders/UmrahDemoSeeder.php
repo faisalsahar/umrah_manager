@@ -2,6 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Enums\AgentSalePaymentDirection;
+use App\Enums\AgentSaleStatus;
+use App\Enums\AgentSaleType;
 use App\Enums\HotelCity;
 use App\Enums\HotelContractType;
 use App\Enums\HotelStaySource;
@@ -16,6 +19,7 @@ use App\Enums\OrderLineType;
 use App\Enums\OrganizationRole;
 use App\Enums\ServiceType;
 use App\Enums\TripMode;
+use App\Models\AgentSale;
 use App\Models\City;
 use App\Models\Group;
 use App\Models\Hotel;
@@ -359,6 +363,57 @@ class UmrahDemoSeeder extends Seeder
             'agent_id' => $agentTurkiye->id,
             'status' => OperatingOrderStatus::PendingReview,
         ]);
+
+        // --- The agent's own sales: entirely its own business, nothing to do with
+        //     the operator above. One fully paid both sides, one still owed by the
+        //     customer, one refunded — so the Sales screen has something to show
+        //     for every state, not just the happy path.
+        $this->seedAgentSales($agentSudan);
+    }
+
+    /**
+     * A ticket sold and fully settled both ways, a ticket the customer still owes
+     * on, and a refunded one — the agent's own accounting, independent of any
+     * operator relationship.
+     */
+    private function seedAgentSales(Organization $agent): void
+    {
+        $settled = AgentSale::create([
+            'agent_organization_id' => $agent->id,
+            'sale_type' => AgentSaleType::Ticket,
+            'customer_name' => 'Ibrahim Adam',
+            'description' => 'Khartoum – Jeddah – Khartoum',
+            'supplier_reference' => 'PNR-7GXQ42',
+            'sale_date' => now()->subDays(5),
+            'purchase_price_cents' => 85000,
+            'sale_price_cents' => 112000,
+        ]);
+        $settled->payments()->create(['direction' => AgentSalePaymentDirection::FromCustomer, 'amount_cents' => 112000, 'paid_on' => now()->subDays(5)]);
+        $settled->payments()->create(['direction' => AgentSalePaymentDirection::ToSupplier, 'amount_cents' => 85000, 'paid_on' => now()->subDays(3)]);
+
+        $outstanding = AgentSale::create([
+            'agent_organization_id' => $agent->id,
+            'sale_type' => AgentSaleType::Ticket,
+            'customer_name' => 'Mona Khalid',
+            'description' => 'Khartoum – Madinah',
+            'supplier_reference' => 'PNR-4KLT19',
+            'sale_date' => now()->subDay(),
+            'purchase_price_cents' => 62000,
+            'sale_price_cents' => 79000,
+        ]);
+        $outstanding->payments()->create(['direction' => AgentSalePaymentDirection::FromCustomer, 'amount_cents' => 30000, 'paid_on' => now()->subDay()]);
+
+        $refunded = AgentSale::create([
+            'agent_organization_id' => $agent->id,
+            'sale_type' => AgentSaleType::Other,
+            'customer_name' => 'Yusuf Ibrahim',
+            'description' => 'Visa processing fee',
+            'sale_date' => now()->subWeek(),
+            'purchase_price_cents' => 15000,
+            'sale_price_cents' => 25000,
+            'status' => AgentSaleStatus::Refunded,
+        ]);
+        $refunded->payments()->create(['direction' => AgentSalePaymentDirection::FromCustomer, 'amount_cents' => 25000, 'paid_on' => now()->subWeek()]);
     }
 
     /**

@@ -134,6 +134,12 @@ Order lines carry purchase/sale price in minor currency units; a ledger computes
 organization's balance with a counterparty by summing entries — never a stored running
 total, so it can't drift out of sync.
 
+An agent's own sales (tickets and anything else it sells to its own customers, entirely
+independent of any operator) are tracked the same way: `AgentSale` carries a purchase/sale
+price per row (same shape as an order line), and `AgentSalePayment` records money moving
+in either direction — from the customer, or out to the supplier/airline — summed rather
+than stored, so either side of the sale can be ahead of the other without conflating them.
+
 For the reasoning behind every one of these decisions, and the parts still open
 (agent ↔ operator multi-tenancy, gender-mixed room sharing, Nusuk/Masar integration, …),
 see [`docs/PLAN.md`](docs/PLAN.md).

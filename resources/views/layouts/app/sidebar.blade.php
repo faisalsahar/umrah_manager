@@ -58,6 +58,9 @@
                                 <flux:sidebar.item icon="magnifying-glass" class="nav-icon-teal" :href="route('my-pilgrims.index')" :current="request()->routeIs('my-pilgrims.*')" wire:navigate>
                                     {{ __('My Pilgrims') }}
                                 </flux:sidebar.item>
+                                <flux:sidebar.item icon="banknotes" class="nav-icon-emerald" :href="route('sales.index')" :current="request()->routeIs('sales.*')" wire:navigate>
+                                    {{ __('Sales') }}
+                                </flux:sidebar.item>
                             @else
                                 <flux:sidebar.item icon="users" class="nav-icon-indigo" :href="route('groups.index')" :current="request()->routeIs('groups.*')" wire:navigate>
                                     {{ __('Groups & Pilgrims') }}

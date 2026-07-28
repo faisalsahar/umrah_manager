@@ -271,7 +271,11 @@ labels introduced, verified by the same programmatic extraction used originally.
   statements straight from SQLite's `sqlite_master` (no `sqlite3` CLI binary needed, unlike
   `artisan schema:dump`) and regrouping them — verified byte-identical by running the full
   test suite, plus a rollback/re-migrate round-trip, against the consolidated set before
-  deleting the originals.
+  deleting the originals. **Later split again into one file per table** (35 files) at explicit
+  request — same dump-and-regroup technique, one dependency-ordered file per table instead of
+  per domain, re-verified byte-identical (111 CREATE statements, same set) plus another
+  rollback/re-migrate round-trip. Both approaches are legitimate; this repo currently uses
+  one-file-per-table.
 
 ---
 
@@ -302,6 +306,40 @@ labels introduced, verified by the same programmatic extraction used originally.
   exist at all, it's created from `.env.example` wholesale. `--dry-run` previews without
   writing; `--example=` / `--target=` override the default paths for testing or unusual
   layouts. See `README.md` for the day-to-day usage.
+
+---
+
+## Agent-side accounting: ticketing and other sales
+
+Researched before building, per the request — three sources, each contributing a distinct
+piece of the design:
+
+1. **IATA BSP** (the industry-standard airline-ticket settlement model): an agent's ticket
+   sale has *two independent cash flows* — what the customer owes the agent, and what the
+   agent owes the airline/supplier (remitted net of commission, on its own cycle). This is
+   why `AgentSalePayment` has a `direction` (from customer / to supplier) rather than a
+   single running balance — either side can lag the other.
+2. **Ezus** (a modern travel-agency management SaaS): per-sale margin tracking, invoicing
+   with deposits, and supplier purchase tracking — confirmed the "purchase price vs sale
+   price on one row gives a margin" shape already used by `OrderLine` is the right one to
+   reuse here, rather than inventing a different model for agents.
+3. **General travel-agency accounting guides** (chart-of-accounts breakdowns): flagged that
+   customer deposits are properly a *liability* (held in trust) until a booking is finalized,
+   not immediate revenue. Deliberately **not** implemented that way here — a sale is booked
+   as revenue the moment it's recorded, same simplification level `OrderLine` already uses
+   for operators. Noted as a scope decision, not an oversight, in `AgentSale`'s docblock.
+
+**What was built**: `agent_sales` (one row per ticket or other sale — reference_no, type,
+customer_name, status, purchase/sale price, supplier_reference) and `agent_sale_payments`
+(direction + amount + date, summed rather than stored — same discipline as `ledger_entries`).
+A new `Sales` screen (agent-only, alongside `My Pilgrims` in the sidebar) lists every sale
+with running totals (sale/cost/margin/outstanding, excluding voided sales), and a detail page
+per sale for recording payments from either side and changing status (issued → refunded/
+voided). Any agent member can record a sale and receive customer payments; only Owner/Admin
+can record a supplier payment or change a sale's status — the one place this introduces a
+permission split narrower than "any member." Entirely independent of the operator
+relationship: no `operating_order_id`, nothing scoped to any operator — this is the agent's
+own business, the same way `LedgerEntry` is scoped to whichever organization's book it's in.
 
 ---
 

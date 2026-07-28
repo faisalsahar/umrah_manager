@@ -21,6 +21,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::livewire('my-pilgrims', 'pages::my-pilgrims.index')->name('my-pilgrims.index');
 
+    Route::livewire('sales', 'pages::sales.index')->name('sales.index');
+    Route::livewire('sales/{sale}', 'pages::sales.show')->name('sales.show');
+
     Route::livewire('operating-orders', 'pages::operating-orders.index')->name('operating-orders.index');
     Route::livewire('operating-orders/create', 'pages::operating-orders.create')->name('operating-orders.create');
     Route::livewire('operating-orders/{operatingOrder}', 'pages::operating-orders.show')->name('operating-orders.show');
