@@ -67,13 +67,14 @@ new #[Title('Users')] class extends Component {
 
     <flux:heading class="sr-only">{{ __('Users') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Users')" :subheading="__('Every registered user on the platform, and which organization(s) they belong to.')">
+    <x-pages::settings.layout :heading="__('Users')" :subheading="__('Every registered user on the platform, and which organization(s) they belong to.')" :wide="true">
         <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" :placeholder="__('Search by name, email, or onboarding code')" class="mb-4" />
 
         <x-ui.card :padded="false">
             <flux:table :paginate="$this->users">
                 <flux:table.columns>
                     <flux:table.column>{{ __('Name') }}</flux:table.column>
+                    <flux:table.column>{{ __('Email') }}</flux:table.column>
                     <flux:table.column minor>{{ __('Onboarding code') }}</flux:table.column>
                     <flux:table.column>{{ __('Signed up via') }}</flux:table.column>
                     <flux:table.column>{{ __('Organizations') }}</flux:table.column>
@@ -81,10 +82,8 @@ new #[Title('Users')] class extends Component {
                 <flux:table.rows>
                     @forelse ($this->users as $user)
                         <flux:table.row wire:key="user-{{ $user->id }}">
-                            <flux:table.cell class="font-medium" :label="__('Name')">
-                                {{ $user->name }}
-                                <span class="block text-xs font-normal text-zinc-500">{{ $user->email }}</span>
-                            </flux:table.cell>
+                            <flux:table.cell class="font-medium" :label="__('Name')">{{ $user->name }}</flux:table.cell>
+                            <flux:table.cell :label="__('Email')">{{ $user->email }}</flux:table.cell>
                             <flux:table.cell minor :label="__('Onboarding code')">
                                 <flux:badge size="sm">{{ $user->onboarding_code ?? '—' }}</flux:badge>
                             </flux:table.cell>
@@ -117,7 +116,7 @@ new #[Title('Users')] class extends Component {
                         </flux:table.row>
                     @empty
                         <flux:table.row>
-                            <flux:table.cell colspan="4">
+                            <flux:table.cell colspan="5">
                                 <x-ui.empty-state icon="users" :title="__('No users match that search.')" />
                             </flux:table.cell>
                         </flux:table.row>
