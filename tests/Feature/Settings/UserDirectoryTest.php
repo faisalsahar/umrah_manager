@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Admin;
+namespace Tests\Feature\Settings;
 
 use App\Enums\OrganizationRole;
 use App\Models\Organization;
@@ -23,7 +23,22 @@ class UserDirectoryTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user);
 
-        Livewire::test('pages::admin.users.index')->assertStatus(403);
+        Livewire::test('pages::settings.users')->assertStatus(403);
+    }
+
+    public function test_a_non_admin_does_not_see_the_users_settings_link(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $this->get(route('language.edit'))->assertDontSee(__('Users'));
+    }
+
+    public function test_the_admin_sees_the_users_settings_link(): void
+    {
+        $this->actingAs($this->admin());
+
+        $this->get(route('language.edit'))->assertSee(__('Users'));
     }
 
     public function test_the_admin_sees_every_user_and_their_organization(): void
@@ -36,7 +51,7 @@ class UserDirectoryTest extends TestCase
 
         $this->actingAs($this->admin());
 
-        Livewire::test('pages::admin.users.index')
+        Livewire::test('pages::settings.users')
             ->assertSee('Nadia Al-Amin')
             ->assertSee('Al-Rahma')
             ->assertSee('Orphan User')
@@ -48,7 +63,7 @@ class UserDirectoryTest extends TestCase
         $admin = $this->admin();
         $this->actingAs($admin);
 
-        Livewire::test('pages::admin.users.index')
+        Livewire::test('pages::settings.users')
             ->assertDontSee($admin->email);
     }
 
@@ -64,7 +79,7 @@ class UserDirectoryTest extends TestCase
 
         $this->actingAs($this->admin());
 
-        Livewire::test('pages::admin.users.index')
+        Livewire::test('pages::settings.users')
             ->assertSee('Sub Agent Staffer')
             ->assertSee('Khartoum Sub-Agent')
             ->assertSee('Sudan Travel Agency');
@@ -76,7 +91,7 @@ class UserDirectoryTest extends TestCase
 
         $this->actingAs($this->admin());
 
-        Livewire::test('pages::admin.users.index')
+        Livewire::test('pages::settings.users')
             ->assertSee('Google Signup')
             ->assertSee('Google');
     }
@@ -87,7 +102,7 @@ class UserDirectoryTest extends TestCase
 
         $this->actingAs($this->admin());
 
-        Livewire::test('pages::admin.users.index')
+        Livewire::test('pages::settings.users')
             ->assertSee('Plain Signup')
             ->assertSeeInOrder(['Plain Signup', __('Email')]);
     }
@@ -99,7 +114,7 @@ class UserDirectoryTest extends TestCase
 
         $this->actingAs($this->admin());
 
-        Livewire::test('pages::admin.users.index')
+        Livewire::test('pages::settings.users')
             ->set('search', 'Ahmed')
             ->assertSee('Ahmed Osman')
             ->assertDontSee('Fatima Ali');

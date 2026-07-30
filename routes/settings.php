@@ -15,6 +15,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::livewire('settings/language', 'pages::settings.language')->name('language.edit');
 
+    // Platform-admin-only — see mount()'s own abort_unless; kept under settings
+    // rather than the main nav, alongside every other personal/account screen.
+    Route::livewire('settings/users', 'pages::settings.users')->name('users.edit');
+
     Route::livewire('settings/security', 'pages::settings.security')
         ->middleware(
             when(

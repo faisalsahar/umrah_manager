@@ -345,11 +345,16 @@ own business, the same way `LedgerEntry` is scoped to whichever organization's b
 
 ## Admin user directory
 
-A new `pages::admin.users.index` (`/admin/users`) lists every registered user platform-wide —
-name, email, onboarding code, and every organization they belong to with their role, including
-a sub-agent's own parent agency (`Organization::parent()`) so the whole chain is visible without
-following links. Users with no organization at all show plainly as such, rather than being
-omitted.
+A new `pages::settings.users` (`/settings/users`) lists every registered user platform-wide —
+name, email, onboarding code, which OAuth provider they signed up through (or plain email),
+and every organization they belong to with their role, including a sub-agent's own parent
+agency (`Organization::parent()`) so the whole chain is visible without following links. Users
+with no organization at all show plainly as such, rather than being omitted.
+
+Lives under Settings (alongside Profile/Security/Appearance/Language) rather than as a main
+sidebar item — the "Users" tab there is itself conditional on `isAdmin()`, so it simply isn't
+present for anyone else. Originally shipped as a top-level admin sidebar item
+(`/admin/users`); moved here per explicit request.
 
 Worth being explicit about: this is a deliberate, narrow exception to "the admin's whole world
 is the Umrah company roster — everything else is that company's own business" (see the

@@ -5,6 +5,9 @@
             <flux:navlist.item :href="route('security.edit')" wire:navigate>{{ __('Security') }}</flux:navlist.item>
             <flux:navlist.item :href="route('appearance.edit')" wire:navigate>{{ __('Appearance') }}</flux:navlist.item>
             <flux:navlist.item :href="route('language.edit')" wire:navigate>{{ __('Language') }}</flux:navlist.item>
+            @if (auth()->user()->isAdmin())
+                <flux:navlist.item :href="route('users.edit')" wire:navigate>{{ __('Users') }}</flux:navlist.item>
+            @endif
         </flux:navlist>
     </div>
 
