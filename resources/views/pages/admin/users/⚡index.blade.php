@@ -40,6 +40,26 @@ new #[Title('Users')] class extends Component {
             ->orderBy('name')
             ->paginate(25);
     }
+
+    /**
+     * A human label for whichever OAuth provider a user signed up through — null
+     * means a plain email/password (or passkey) signup, never a provider at all.
+     * Brand names are never translated, matching how the login screen's own
+     * provider buttons already handle this (see components/social-login.blade.php).
+     *
+     * @return array<string, string>
+     */
+    public function getProviderLabelsProperty(): array
+    {
+        return [
+            'google' => 'Google',
+            'github' => 'GitHub',
+            'facebook' => 'Facebook',
+            'linkedin-openid' => 'LinkedIn',
+            'apple' => 'Apple',
+            'microsoft' => 'Microsoft',
+        ];
+    }
 }; ?>
 
 <div class="flex flex-col gap-6">
@@ -53,6 +73,7 @@ new #[Title('Users')] class extends Component {
                 <flux:table.column>{{ __('Name') }}</flux:table.column>
                 <flux:table.column>{{ __('Email') }}</flux:table.column>
                 <flux:table.column minor>{{ __('Onboarding code') }}</flux:table.column>
+                <flux:table.column>{{ __('Signed up via') }}</flux:table.column>
                 <flux:table.column>{{ __('Organizations') }}</flux:table.column>
             </flux:table.columns>
             <flux:table.rows>
@@ -62,6 +83,17 @@ new #[Title('Users')] class extends Component {
                         <flux:table.cell :label="__('Email')">{{ $user->email }}</flux:table.cell>
                         <flux:table.cell minor :label="__('Onboarding code')">
                             <flux:badge size="sm">{{ $user->onboarding_code ?? '—' }}</flux:badge>
+                        </flux:table.cell>
+                        <flux:table.cell :label="__('Signed up via')">
+                            <span class="flex items-center gap-1.5">
+                                @if ($user->provider)
+                                    <x-social-icon :provider="$user->provider" class="size-4 shrink-0" />
+                                    <span>{{ $this->providerLabels[$user->provider] ?? $user->provider }}</span>
+                                @else
+                                    <flux:icon.envelope class="size-4 shrink-0 text-zinc-400" />
+                                    <span>{{ __('Email') }}</span>
+                                @endif
+                            </span>
                         </flux:table.cell>
                         <flux:table.cell :label="__('Organizations')">
                             @forelse ($user->organizations as $organization)
@@ -81,7 +113,7 @@ new #[Title('Users')] class extends Component {
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="4">
+                        <flux:table.cell colspan="5">
                             <x-ui.empty-state icon="users" :title="__('No users match that search.')" />
                         </flux:table.cell>
                     </flux:table.row>

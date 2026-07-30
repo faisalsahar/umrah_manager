@@ -70,6 +70,28 @@ class UserDirectoryTest extends TestCase
             ->assertSee('Sudan Travel Agency');
     }
 
+    public function test_an_oauth_user_shows_their_provider(): void
+    {
+        User::factory()->create(['name' => 'Google Signup', 'provider' => 'google', 'provider_id' => '12345']);
+
+        $this->actingAs($this->admin());
+
+        Livewire::test('pages::admin.users.index')
+            ->assertSee('Google Signup')
+            ->assertSee('Google');
+    }
+
+    public function test_a_normal_signup_shows_as_email(): void
+    {
+        User::factory()->create(['name' => 'Plain Signup', 'provider' => null]);
+
+        $this->actingAs($this->admin());
+
+        Livewire::test('pages::admin.users.index')
+            ->assertSee('Plain Signup')
+            ->assertSeeInOrder(['Plain Signup', __('Email')]);
+    }
+
     public function test_search_filters_by_name_email_or_onboarding_code(): void
     {
         User::factory()->create(['name' => 'Ahmed Osman', 'email' => 'ahmed@example.test']);
