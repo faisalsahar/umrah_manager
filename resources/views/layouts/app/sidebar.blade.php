@@ -40,6 +40,9 @@
                         <flux:sidebar.item icon="building-office-2" class="nav-icon-sky" :href="route('admin.umrah-companies.index')" :current="request()->routeIs('admin.umrah-companies.*')" wire:navigate>
                             {{ __('Umrah Companies') }}
                         </flux:sidebar.item>
+                        <flux:sidebar.item icon="users" class="nav-icon-violet" :href="route('admin.users.index')" :current="request()->routeIs('admin.users.*')" wire:navigate>
+                            {{ __('Users') }}
+                        </flux:sidebar.item>
                     </flux:sidebar.group>
                 @else
                     @php $currentOrgType = auth()->user()->currentOrganization?->type; @endphp

@@ -343,6 +343,23 @@ own business, the same way `LedgerEntry` is scoped to whichever organization's b
 
 ---
 
+## Admin user directory
+
+A new `pages::admin.users.index` (`/admin/users`) lists every registered user platform-wide —
+name, email, onboarding code, and every organization they belong to with their role, including
+a sub-agent's own parent agency (`Organization::parent()`) so the whole chain is visible without
+following links. Users with no organization at all show plainly as such, rather than being
+omitted.
+
+Worth being explicit about: this is a deliberate, narrow exception to "the admin's whole world
+is the Umrah company roster — everything else is that company's own business" (see the
+Platform administration section above). It shows agent/hotel/transport-supplier users too, not
+just Umrah company staff — but strictly **read-only** identity/membership information, nothing
+operational (no pilgrims, orders, money). Requested explicitly, not a scope creep discovered
+along the way.
+
+---
+
 ## 1. What this product actually is
 
 Azowar is **SaaS sold to Umrah operators** (licensed Umrah companies in KSA). Each

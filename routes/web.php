@@ -46,6 +46,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Everything inside a company is the company's own business, see docs/PLAN.md.
     Route::livewire('admin/umrah-companies', 'pages::admin.umrah-companies.index')->name('admin.umrah-companies.index');
     Route::livewire('admin/umrah-companies/{umrahCompany}', 'pages::admin.umrah-companies.show')->name('admin.umrah-companies.show');
+    Route::livewire('admin/users', 'pages::admin.users.index')->name('admin.users.index');
 });
 
 require __DIR__.'/settings.php';
